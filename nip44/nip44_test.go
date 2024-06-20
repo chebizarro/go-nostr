@@ -44,6 +44,35 @@ func assertCryptPriv(t *testing.T, sk1 string, sk2 string, conversationKey strin
 	assert.Equal(t, decrypted, plaintext, "wrong decryption")
 }
 
+func assertCryptPrivNoSalt(t *testing.T, sk1 string, sk2 string, conversationKey string, plaintext string, expected string) {
+	var (
+		k1        []byte
+		actual    string
+		decrypted string
+		ok        bool
+		err       error
+	)
+	k1, err = hex.DecodeString(conversationKey)
+	if ok = assert.NoErrorf(t, err, "hex decode failed for conversation key: %v", err); !ok {
+		return
+	}
+	if ok = assertConversationKeyGenerationSec(t, sk1, sk2, conversationKey); !ok {
+		return
+	}
+	actual, err = Encrypt(plaintext, k1)
+	if ok = assert.NoError(t, err, "encryption failed: %v", err); !ok {
+		return
+	}
+	if ok = assert.Equal(t, len(expected), len(actual), "length of result is different"); !ok {
+		return
+	}
+	decrypted, err = Decrypt(expected, k1)
+	if ok = assert.NoErrorf(t, err, "decryption failed: %v", err); !ok {
+		return
+	}
+	assert.Equal(t, decrypted, plaintext, "wrong decryption")
+}
+
 func assertCryptPub(t *testing.T, sk1 string, pub2 string, conversationKey string, salt string, plaintext string, expected string) {
 	var (
 		k1        []byte
@@ -341,6 +370,117 @@ func TestCryptPriv011(t *testing.T) {
 		"AqPiGSQthUZecK3NZAtWSz/v9X0u+HRdXnoGY7LczOtUf05aMF89q1FLwJvaFJYICZoMYgRJHFLwPiOHce7fuAc40kX0wXJvipyBJ9HzCOj7CgtnC1/cmPCHR3s5AIORmroBWglm1LiFMohv1FSPEbaBD51VXxJa4JyWpYhreSOEjn1wd0lMKC9b+osV2N2tpbs+rbpQem2tRen3sWflmCqjkG5VOVwRErCuXuPb5+hYwd8BoZbfCrsiAVLd7YT44dRtKNBx6rkabWfddKSLtreHLDysOhQUVOp/XkE7OzSkWl6sky0Hva6qJJ/V726hMlomvcLHjE41iKmW2CpcZfOedg==",
 	)
 }
+
+func TestCryptPrivNoSalt001(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"0000000000000000000000000000000000000000000000000000000000000001",
+		"0000000000000000000000000000000000000000000000000000000000000002",
+		"c41c775356fd92eadc63ff5a0dc1da211b268cbea22316767095b2871ea1412d",
+		"a",
+		"AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABee0G5VSK0/9YypIObAtDKfYEAjD35uVkHyB0F4DwrcNaCXlCWZKaArsGrY6M9wnuTMxWfp1RTN9Xga8no+kF5Vsb",
+	)
+}
+
+func TestCryptPrivNoSalt002(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"0000000000000000000000000000000000000000000000000000000000000002",
+		"0000000000000000000000000000000000000000000000000000000000000001",
+		"c41c775356fd92eadc63ff5a0dc1da211b268cbea22316767095b2871ea1412d",
+		"🍕🫃",
+		"AvAAAAAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAAAAAAAPSKSK6is9ngkX2+cSq85Th16oRTISAOfhStnixqZziKMDvB0QQzgFZdjLTPicCJaV8nDITO+QfaQ61+KbWQIOO2Yj",
+	)
+}
+
+func TestCryptPrivNoSalt003(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"5c0c523f52a5b6fad39ed2403092df8cebc36318b39383bca6c00808626fab3a",
+		"4b22aa260e4acb7021e32f38a6cdf4b673c6a277755bfce287e370c924dc936d",
+		"3e2b52a63be47d34fe0a80e34e73d436d6963bc8f39827f327057a9986c20a45",
+		"表ポあA鷗ŒéＢ逍Üßªąñ丂㐀𠀀",
+		"ArY1I2xC2yDwIbuNHN/1ynXdGgzHLqdCrXUPMwELJPc7s7JqlCMJBAIIjfkpHReBPXeoMCyuClwgbT419jUWU1PwaNl4FEQYKCDKVJz+97Mp3K+Q2YGa77B6gpxB/lr1QgoqpDf7wDVrDmOqGoiPjWDqy8KzLueKDcm9BVP8xeTJIxs=",
+	)
+}
+
+func TestCryptPrivNoSalt004(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"8f40e50a84a7462e2b8d24c28898ef1f23359fff50d8c509e6fb7ce06e142f9c",
+		"b9b0a1e9cc20100c5faa3bbe2777303d25950616c4c6a3fa2e3e046f936ec2ba",
+		"d5a2f879123145a4b291d767428870f5a8d9e5007193321795b40183d4ab8c2b",
+		"ability🤝的 ȺȾ",
+		"ArIJia3D3cQc0sQ1lSwNWakTFdjFIY1QQFc/w3SVQ6yvbG2S0x4Yu86QGwPTy7mP3961I1XqB6SFFTzqDZZavhxoWMj7mEVGMQIsh2RLWI5EYQaQDIePSnXPlzf7CIt+voTD",
+	)
+}
+
+func TestCryptPrivNoSalt005(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"875adb475056aec0b4809bd2db9aa00cff53a649e7b59d8edcbf4e6330b0995c",
+		"9c05781112d5b0a2a7148a222e50e0bd891d6b60c5483f03456e982185944aae",
+		"3b15c977e20bfe4b8482991274635edd94f366595b1a3d2993515705ca3cedb8",
+		"pepper👀їжак",
+		"Ao1EQnE+udR5EXXLBA2Y1vxb6IZNbsL4nPCJWisrctGxY3AduCS+jTUgAAnfvKafkmpy15+i9YMwCdccisRa8SvzW671T2JO4LFSPX31K4kYUKelSAdSPwe9NwO6LhOsnoJ+",
+	)
+}
+
+func TestCryptPrivNoSalt006(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"eba1687cab6a3101bfc68fd70f214aa4cc059e9ec1b79fdb9ad0a0a4e259829f",
+		"dff20d262bef9dfd94666548f556393085e6ea421c8af86e9d333fa8747e94b3",
+		"4f1538411098cf11c8af216836444787c462d47f97287f46cf7edb2c4915b8a5",
+		"( ͡° ͜ʖ ͡°)",
+		"AiGAtSrmRfz59QgNgbHwtdbyzXf/PJhogrtUkVhGLzQHv4qhKQwnFQ54OjVMgqCea/Vj0YqBSdhqNR777TJ4zIUk7R0fnizp6l1zwgzWv7+ee6u+0/89KIjY5q1wu6inyuiv",
+	)
+}
+
+func TestCryptPrivNoSalt007(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
+		"b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
+		"75fe686d21a035f0c7cd70da64ba307936e5ca0b20710496a6b6b5f573377bdd",
+		"مُنَاقَشَةُ سُبُلِ اِسْتِخْدَامِ اللُّغَةِ فِي النُّظُمِ الْقَائِمَةِ وَفِيم يَخُصَّ التَّطْبِيقَاتُ الْحاسُوبِيَّةُ،",
+		"AuTNX3zk7qAkvHGxetRWqYanSsQmwsYrChXrXFyPiItoIBsWu1CB+sStla2M4VeANASHxM78i1CfHQQH1YbBy24Tng7emYW44ol6QkFD6D8Zq7QPl+8L1c47lx8RoODEQMvNCbOk5ffUV3/AhONHBXnffrI+0025c+uRGzfqpYki4lBqm9iYU+k3Tvjczq9wU0mkVDEaM34WiQi30MfkJdRbeeYaq6kNvGPunLb3xdjjs5DL720d61Flc5ZfoZm+CBhADy9D9XiVZYLKAlkijALJur9dATYKci6OBOoc2SJS2Clai5hOVzR0yVeyHRgRfH9aLSlWW5dXcUxTo7qqRjNf8W5+J4jF4gNQp5f5d0YA4vPAzjBwSP/5bGzNDslKfcAH",
+	)
+}
+
+func TestCryptPrivNoSalt008(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
+		"b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
+		"75fe686d21a035f0c7cd70da64ba307936e5ca0b20710496a6b6b5f573377bdd",
+		"مُنَاقَشَةُ سُبُلِ اِسْتِخْدَامِ اللُّغَةِ فِي النُّظُمِ الْقَائِمَةِ وَفِيم يَخُصَّ التَّطْبِيقَاتُ الْحاسُوبِيَّةُ،",
+		"AuTNX3zk7qAkvHGxetRWqYanSsQmwsYrChXrXFyPiItoIBsWu1CB+sStla2M4VeANASHxM78i1CfHQQH1YbBy24Tng7emYW44ol6QkFD6D8Zq7QPl+8L1c47lx8RoODEQMvNCbOk5ffUV3/AhONHBXnffrI+0025c+uRGzfqpYki4lBqm9iYU+k3Tvjczq9wU0mkVDEaM34WiQi30MfkJdRbeeYaq6kNvGPunLb3xdjjs5DL720d61Flc5ZfoZm+CBhADy9D9XiVZYLKAlkijALJur9dATYKci6OBOoc2SJS2Clai5hOVzR0yVeyHRgRfH9aLSlWW5dXcUxTo7qqRjNf8W5+J4jF4gNQp5f5d0YA4vPAzjBwSP/5bGzNDslKfcAH",
+	)
+}
+
+func TestCryptPrivNoSalt009X(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
+		"b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
+		"75fe686d21a035f0c7cd70da64ba307936e5ca0b20710496a6b6b5f573377bdd",
+		"الكل في المجمو عة (5)",
+		"AjjRygq++eX1ZOiXYahs7gRXS2gl0+8gY7EK11iZ5LAjbOTrlfrxak5Lki42v2jMPpLSicy8eHjsWkkMtF0i925vOaKG/ZkMHh9ccQBdfTvgEGKzztedqDCAWb5TP1YwU1PsWaiiqG3+WgVvJiO4lUdMHXL7+zKKx8bgDtowzz4QAwI=",
+	)
+}
+
+func TestCryptPrivNoSalt010(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
+		"b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
+		"75fe686d21a035f0c7cd70da64ba307936e5ca0b20710496a6b6b5f573377bdd",
+		"𝖑𝖆𝖟𝖞 社會科學院語學研究所",
+		"Ak8aMZCfNIOp5pyFSaVbvJryX6W77Pe9MtmJb4PvLhLgh/TsxPLFSANcT67EC1t/qxjru5ZoADjKVEt2ejdx+xGvH49mcdfbc+l+L7gJtkH7GLKpE9pQNQWNHMAmj043PAXJZ++fiJObMRR2mye5VHEANzZWkZXMrXF7YjuG10S1pOU=",
+	)
+}
+
+func TestCryptPrivNoSalt011(t *testing.T) {
+	assertCryptPrivNoSalt(t,
+		"d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
+		"b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
+		"75fe686d21a035f0c7cd70da64ba307936e5ca0b20710496a6b6b5f573377bdd",
+		"🙈 🙉 🙊 0️⃣ 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟 Powerلُلُصّبُلُلصّبُررً ॣ ॣh ॣ ॣ冗",
+		"AqPiGSQthUZecK3NZAtWSz/v9X0u+HRdXnoGY7LczOtUf05aMF89q1FLwJvaFJYICZoMYgRJHFLwPiOHce7fuAc40kX0wXJvipyBJ9HzCOj7CgtnC1/cmPCHR3s5AIORmroBWglm1LiFMohv1FSPEbaBD51VXxJa4JyWpYhreSOEjn1wd0lMKC9b+osV2N2tpbs+rbpQem2tRen3sWflmCqjkG5VOVwRErCuXuPb5+hYwd8BoZbfCrsiAVLd7YT44dRtKNBx6rkabWfddKSLtreHLDysOhQUVOp/XkE7OzSkWl6sky0Hva6qJJ/V726hMlomvcLHjE41iKmW2CpcZfOedg==",
+	)
+}
+
 
 func TestCryptLong001(t *testing.T) {
 	assertCryptLong(t,

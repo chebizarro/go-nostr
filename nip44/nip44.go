@@ -53,7 +53,7 @@ func Encrypt(plaintext string, conversationKey []byte, applyOptions ...func(opts
 
 	salt := opts.salt
 	if salt == nil {
-		salt := make([]byte, 32)
+		salt = make([]byte, 32)
 		if _, err := rand.Read(salt); err != nil {
 			return "", err
 		}
